@@ -1,0 +1,60 @@
+/* Header.css */
+header {
+    background-color: #051F40;
+    /* Color de fondo azul */
+    color: white;
+    /* Texto en color blanco */
+    padding: 1rem;
+    /* Espaciado interno */
+}
+
+nav ul {
+    list-style-type: none;
+    /* Remueve los puntos de la lista */
+    padding: 0;
+    /* Remueve el padding predeterminado */
+    display: flex;
+    /* Dispone los elementos de la lista en línea */
+    justify-content: space-around;
+    /* Distribuye el espacio entre los elementos de la lista */
+    align-items: center;
+}
+
+nav a {
+    color: white;
+    /* Color del texto de los enlaces */
+    text-decoration: none;
+    /* Remueve el subrayado de los enlaces */
+}
+
+nav a:hover {
+    text-decoration: underline;
+    /* Añade subrayado al pasar el mouse sobre los enlaces */
+}
+
+.logo {
+    height: auto;
+    /* Asegura que el logo mantenga su proporción */
+    width: 120px;
+    /* O el tamaño que mejor se ajuste a tu diseño */
+    vertical-align: middle;
+    /* Alinea verticalmente el logo con el texto de los enlaces */
+}
+
+.github{
+    height: auto;
+    /* Asegura que el logo mantenga su proporción */
+    width: 50px;
+    /* O el tamaño que mejor se ajuste a tu diseño */
+    vertical-align: middle;
+    /* Alinea verticalmente el logo con el texto de los enlaces */
+}
+
+.linkedin{
+    height: auto;
+    /* Asegura que el logo mantenga su proporción */
+    width: 30px;
+    /* O el tamaño que mejor se ajuste a tu diseño */
+    vertical-align: middle;
+    /* Alinea verticalmente el logo con el texto de los enlaces */
+}
