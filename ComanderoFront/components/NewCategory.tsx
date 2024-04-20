@@ -17,6 +17,7 @@ export function NewCategory({ navigation }: NewCategoryProps) {
     const handleCreateCategory = async () => {
         try {
             const userToken = await AsyncStorage.getItem('userToken');
+            console.log('userToken:', userToken);
             const headers = {
                 Authorization: `Token ${userToken}`,
                 'Content-Type': 'application/json',

@@ -1,50 +1,59 @@
-import React, { useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, Button } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-const userToken = AsyncStorage.getItem('userToken');
+import axios from 'axios';
 
 type Categoria = {
-    id: string;
+    id: number;
     nombre: string;
 };
 
 type Plato = {
-    id: string;
+    id: number;
     nombre: string;
-    categoriaId: string;
+    precio: string;
+    categoria: Categoria;
 };
 
-const categorias: Categoria[] = [
-    { id: '1', nombre: 'Entrantes' },
-    { id: '2', nombre: 'Principales' },
-    { id: '3', nombre: 'Postres' },
-    { id: '4', nombre: 'Bebidas' },
-    { id: '5', nombre: 'Cafés' },
-
-];
-
-const platos: Plato[] = [
-    { id: '1', nombre: 'Ensalada César', categoriaId: '1' },
-    { id: '2', nombre: 'Hamburguesa', categoriaId: '2' },
-    { id: '3', nombre: 'Tiramisú', categoriaId: '3' },
-    { id: '4', nombre: 'Coca-Cola', categoriaId: '4' },
-    { id: '5', nombre: 'Café Americano', categoriaId: '5' },
-    { id: '6', nombre: 'Patatas Bravas', categoriaId: '1' },
-    { id: '7', nombre: 'Pizza', categoriaId: '2' },
-    { id: '8', nombre: 'Flan', categoriaId: '3' },
-    { id: '9', nombre: 'Fanta', categoriaId: '4' },
-    { id: '10', nombre: 'Café con leche', categoriaId: '5' },
-];
-
 export function NuevaComandaScreen() {
-    const [categoriaSeleccionada, setCategoriaSeleccionada] = useState<string | null>(null);
+    const [categorias, setCategorias] = useState<Categoria[]>([]);
+    const [categoriaSeleccionada, setCategoriaSeleccionada] = useState<number | null>(null);
+    const [platos, setPlatos] = useState<Plato[]>([]);
     const [platosSeleccionados, setPlatosSeleccionados] = useState<Plato[]>([]);
 
-    const platosFiltrados = platos.filter(plato => plato.categoriaId === categoriaSeleccionada);
+    useEffect(() => {
+        getCategorias();
+        getPlatos();
+    }, []);
+
+    const getCategorias = async () => {
+        const userToken = await AsyncStorage.getItem('userToken');
+        const headers = {
+            Authorization: `Token ${userToken}`,
+            'Content-Type': 'application/json',
+        };
+        const response = await axios.get('http://192.168.1.129:8000/comanda/categorias/', { headers });
+        if (response.status === 200) {
+            setCategorias(response.data);
+        }
+    };
+
+    const getPlatos = async () => {
+        const userToken = await AsyncStorage.getItem('userToken');
+        const headers = {
+            Authorization: `Token ${userToken}`,
+            'Content-Type': 'application/json',
+        };
+        const response = await axios.get('http://192.168.1.129:8000/comanda/platos/', { headers });
+        if (response.status === 200) {
+            setPlatos(response.data);
+        }
+    };
+    
 
     return (
         <View style={styles.container}>
-            {categoriaSeleccionada === null ? (
+            <View style={styles.categoriasContainer}>
                 <FlatList
                     data={categorias}
                     horizontal
@@ -57,39 +66,31 @@ export function NuevaComandaScreen() {
                             <Text style={styles.categoriaTexto}>{item.nombre}</Text>
                         </TouchableOpacity>
                     )}
-                    keyExtractor={item => item.id}
+                    keyExtractor={item => item.id.toString()}
                 />
-            ) : (
-                <View style={styles.platosContainer}>
-                    <TouchableOpacity
-                        style={styles.volverButton}
-                        onPress={() => setCategoriaSeleccionada(null)}
-                    >
-                        <Text>Volver a Categorías</Text>
-                    </TouchableOpacity>
-                    <View style={styles.platossubContainer}>
-                        <FlatList
-                            data={platosFiltrados}
-                            renderItem={({ item }) => (
-                                <TouchableOpacity
-                                    style={styles.plato}
-                                    onPress={() => setPlatosSeleccionados(current => [...current, item])}
-                                >
-                                    <Text style={styles.platoTexto}>{item.nombre}</Text>
-                                </TouchableOpacity>
-                            )}
-                            keyExtractor={item => item.id}
-                        />
-                    </View>
-                </View>
-            )}
-
+            </View>
+            <ScrollView style={styles.platosContainer}>
+                {categoriaSeleccionada && (
+                    <FlatList
+                        data={platos.filter(plato => plato.categoria.id === categoriaSeleccionada)}
+                        renderItem={({ item }) => (
+                            <TouchableOpacity
+                                style={styles.plato}
+                                onPress={() => setPlatosSeleccionados(current => [...current, item])}
+                            >
+                                <Text style={styles.platoTexto}>{item.nombre} - ${item.precio}</Text>
+                            </TouchableOpacity>
+                        )}
+                        keyExtractor={item => item.id.toString()}
+                    />
+                )}
+            </ScrollView>
             <View style={styles.seleccionadosContainer}>
                 <Text style={styles.subtitulo}>Platos en la comanda:</Text>
                 <FlatList
                     data={platosSeleccionados}
                     renderItem={({ item }) => (
-                        <Text style={styles.platoSeleccionadoTexto}>{item.nombre}</Text>
+                        <Text style={styles.platoSeleccionadoTexto}>{item.nombre} - ${item.precio}</Text>
                     )}
                     keyExtractor={(item, index) => index.toString()}
                 />
@@ -97,62 +98,59 @@ export function NuevaComandaScreen() {
         </View>
     );
 }
+
 const styles = StyleSheet.create({
     container: {
         flex: 1,
     },
-    categoria: {
+    categoriasContainer: {
+        height: 80, // Altura fija para las categorías
+        backgroundColor: '#f0f0f0',
+    },
+    platosContainer: {
+        flex: 1, // Ocupa todo el espacio disponible entre las categorías y los platos seleccionados
+    },
+    seleccionadosContainer: {
+        height: 400, // Altura fija para los platos seleccionados
+        backgroundColor: '#eee',
         padding: 10,
-        backgroundColor: 'lightgray',
-        margin: 5,
-        borderRadius: 5,
-        // Define un ancho fijo para los botones de categorías
-        width: 150,
-        alignItems: 'center', // Centra el texto en el botón
     },
-    categoriaTexto: {
-        fontWeight: 'bold',
-        textAlign: 'center', // Asegura que el texto esté centrado si es más largo de una línea
-    },
-    plato: {
-        width: 150,
+    categoria: {
         padding: 10,
         backgroundColor: 'lightblue',
         margin: 5,
         borderRadius: 5,
-        // Define un ancho fijo para los botones de platos
-        alignItems: 'center', // Centra el texto en el botón
+        width: 150,
+        alignItems: 'center',
+    },
+    categoriaTexto: {
+        fontWeight: 'bold',
+        textAlign: 'center',
+    },
+    plato: {
+        padding: 10,
+        backgroundColor: 'lightblue',
+        margin: 5,
+        borderRadius: 5,
+        alignItems: 'center',
     },
     platoTexto: {
         fontWeight: 'bold',
-        textAlign: 'center', // Asegura que el texto esté centrado si es más largo de una línea
-    },
-    seleccionadosContainer: {
-        flex: 1,
-        backgroundColor: '#red',
-        padding: 10,
+        textAlign: 'center',
     },
     subtitulo: {
         fontSize: 18,
         fontWeight: 'bold',
     },
     platoSeleccionadoTexto: {
-        fontSize: 16,
-        padding: 2,
+        fontSize: 18, // Aumenta el tamaño de la fuente para mejor legibilidad
+        padding: 10, // Aumenta el padding para más espacio alrededor del texto
+        margin: 5, // Espacio entre los elementos
+        backgroundColor: '#f9f9f9', // Fondo claro para cada elemento
+        borderRadius: 10, // Bordes redondeados para una apariencia más suave
+        borderWidth: 1, // Borde sutil para definir los elementos
+        borderColor: '#ccc', // Color del borde
+        color: '#333', // Color del texto oscuro para contrastar con el fondo
+        textAlign: 'left', // Centra el texto horizontalmente
     },
-    platosContainer: {
-        flex: 1,
-    },
-    volverButton: {
-        padding: 10,
-        margin: 5,
-        borderRadius: 25,
-        width: '25%',
-        backgroundColor: 'lightblue',
-    },
-    platossubContainer: {
-        flexDirection: 'row',
-    },
-
-    // Agrega más estilos según necesites
 });

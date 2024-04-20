@@ -21,16 +21,18 @@ export function NewPlate({ navigation }: CreateDishFormProps) {
     const [dishPrice, setDishPrice] = useState('');
     const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
     const [isModalVisible, setIsModalVisible] = useState(false); // Estado para controlar la visibilidad del modal
-    const userToken = AsyncStorage.getItem('userToken');
-    const headers = {
-        Authorization: `Token ${userToken}`,
-    };
+
     useEffect(() => {
         getCategorias();
     }, []);
     const getCategorias = async () => {
         try {
-            const response = await axios.get('http://127.0.0.1:8000/comanda/categorias/',
+            const userToken = await AsyncStorage.getItem('userToken');
+            const headers = {
+                Authorization: `Token ${userToken}`,
+                'Content-Type': 'application/json',
+            };
+            const response = await axios.get('http://192.168.1.129:8000/comanda/categorias/',
                 { headers });
             if (response.status === 200) {
                 setCategorias(response.data);
@@ -41,11 +43,16 @@ export function NewPlate({ navigation }: CreateDishFormProps) {
     };
     const handleCreateDish = async () => {
         try {
-            const response = await axios.post('http://192.168.1.129:8000/comanda/platos/',{
+            const userToken = await AsyncStorage.getItem('userToken');
+            const headers = {
+                Authorization: `Token ${userToken}`,
+                'Content-Type': 'application/json',
+            };
+            const response = await axios.post('http://192.168.1.129:8000/comanda/platos/', {
                 nombre: dishName,
                 precio: dishPrice,
                 categoria_id: selectedCategory,
-            },{headers});
+            }, { headers });
             if (response.status === 201) {
                 setIsModalVisible(true);
                 setDishName('');
